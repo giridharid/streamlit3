@@ -15,36 +15,50 @@ AGENT_ID = "agent_b9a402f4-9a19-40c7-849e-e1df4f3ad0b2"
 def get_credentials():
     gcp_creds = os.environ.get("GCP_CREDENTIALS_JSON", "")
     
-    if gcp_creds:
-        gcp_creds = gcp_creds.strip()
-        if gcp_creds.startswith('"') and gcp_creds.endswith('"'):
-            gcp_creds = gcp_creds[1:-1]
-        if gcp_creds.startswith("'") and gcp_creds.endswith("'"):
-            gcp_creds = gcp_creds[1:-1]
+    if not gcp_creds:
+        return None
+    
+    gcp_creds = gcp_creds.strip()
+    if gcp_creds.startswith('"') and gcp_creds.endswith('"'):
+        gcp_creds = gcp_creds[1:-1]
+    if gcp_creds.startswith("'") and gcp_creds.endswith("'"):
+        gcp_creds = gcp_creds[1:-1]
+    
+    try:
+        if gcp_creds.strip().startswith("{"):
+            creds_dict = json.loads(gcp_creds)
+        else:
+            padding = 4 - len(gcp_creds) % 4
+            if padding != 4:
+                gcp_creds += "=" * padding
+            decoded = base64.b64decode(gcp_creds).decode('utf-8')
+            creds_dict = json.loads(decoded)
         
-        try:
-            if gcp_creds.strip().startswith("{"):
-                creds_dict = json.loads(gcp_creds)
-            else:
-                padding = 4 - len(gcp_creds) % 4
-                if padding != 4:
-                    gcp_creds += "=" * padding
-                decoded = base64.b64decode(gcp_creds).decode('utf-8')
-                creds_dict = json.loads(decoded)
-            
-            return service_account.Credentials.from_service_account_info(creds_dict)
-        except Exception as e:
-            st.error(f"Credential error: {e}")
-            return None
-    return None
+        return service_account.Credentials.from_service_account_info(creds_dict)
+    except Exception as e:
+        st.error(f"Credential error: {e}")
+        return None
 
 # --- 3. INITIALIZE CLIENT ---
 @st.cache_resource
 def get_chat_client():
     credentials = get_credentials()
     if credentials:
-        return geminidataanalytics.DataChatServiceClient(credentials=credentials)
-    return geminidataanalytics.DataChatServiceClient()
+        # Create client with explicit credentials
+        from google.api_core import client_options
+        client_opts = client_options.ClientOptions()
+        return geminidataanalytics.DataChatServiceClient(
+            credentials=credentials,
+            client_options=client_opts
+        )
+    else:
+        # Try default credentials (local dev)
+        try:
+            return geminidataanalytics.DataChatServiceClient()
+        except Exception as e:
+            st.error(f"Failed to create client. Set GCP_CREDENTIALS_JSON environment variable.")
+            st.error(f"Error: {e}")
+            st.stop()
 
 chat_client = get_chat_client()
 parent_path = f"projects/{PROJECT_ID}/locations/{LOCATION}"
