@@ -6,6 +6,9 @@ import base64
 from google.cloud import geminidataanalytics_v1alpha as geminidataanalytics
 from google.oauth2 import service_account
 
+# --- PAGE CONFIG (must be first Streamlit command) ---
+st.set_page_config(page_title="Hotel Data Analyst", page_icon="🏨")
+
 # --- 1. CONFIGURATION ---
 PROJECT_ID = "gen-lang-client-0143536012"
 LOCATION = "global"
@@ -48,6 +51,7 @@ def get_chat_client():
         from google.api_core import client_options
         client_opts = client_options.ClientOptions()
         return geminidataanalytics.DataChatServiceClient(
+
             credentials=credentials,
             client_options=client_opts
         )
@@ -86,7 +90,6 @@ def setup_conversation():
         chat_client.create_conversation(request=request)
 
 # --- 5. STREAMLIT UI ---
-st.set_page_config(page_title="Hotel Data Analyst", page_icon="🏨")
 st.title("🏨 Hotel Data Analyst")
 
 with st.spinner("Setting up secure agent conversation..."):
