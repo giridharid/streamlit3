@@ -7,7 +7,7 @@ from google.cloud import geminidataanalytics_v1alpha as geminidataanalytics
 from google.oauth2 import service_account
 
 # --- PAGE CONFIG (must be first Streamlit command) ---
-st.set_page_config(page_title="Hotel Data Analyst", page_icon="🏨")
+st.set_page_config(page_title="Hotel Data Intelligence", page_icon="🏨")
 
 # --- 1. CONFIGURATION ---
 PROJECT_ID = "gen-lang-client-0143536012"
